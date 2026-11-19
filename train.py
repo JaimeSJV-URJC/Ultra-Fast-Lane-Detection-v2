@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
         train(net, train_loader, loss_dict, optimizer, scheduler,logger, epoch, metric_dict, cfg.dataset)
         train_loader.reset()
-        # saved before evaluation so a failed eval never loses the epoch
+        # Saved before evaluation so a failed eval never loses the epoch
         save_model(net, optimizer, epoch, work_dir, distributed, name = 'model_last.pth')
 
         eval_interval = getattr(cfg, 'eval_interval', 1)

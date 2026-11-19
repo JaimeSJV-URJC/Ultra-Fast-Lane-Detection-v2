@@ -1,10 +1,3 @@
-"""Inference speed of UFLDv2 (batch 1, fp32, no_grad, GPU-synchronised timing),
-the same protocol as the speed_simple.py scripts in LaneATT, clrnet and conditional-lane-detection.
-
-Times the network forward. Decoding the output into lane points is not included.
-Run inside WSL:  conda activate lane-det && python speed_simple.py configs/culane_res18.py
-Weights come from --test_model (defaults to the trained CULane model below).
-"""
 import argparse
 import os
 import sys
@@ -34,7 +27,6 @@ state_dict = torch.load(cfg.test_model or DEFAULT_CKPT, map_location='cpu')['mod
 net.load_state_dict({k[7:] if k.startswith('module.') else k: v for k, v in state_dict.items()}, strict=True)
 net.eval()
 
-# same preprocessing as LaneTestDataset: resize, normalise, keep the bottom train_height rows
 img_transforms = transforms.Compose([
     transforms.Resize((int(cfg.train_height / cfg.crop_ratio), cfg.train_width)),
     transforms.ToTensor(),
