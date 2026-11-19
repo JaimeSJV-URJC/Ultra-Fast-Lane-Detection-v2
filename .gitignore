@@ -10,3 +10,4 @@ evaluate
 **/dist
 **/*egg-info
 *.lprof
+logs/

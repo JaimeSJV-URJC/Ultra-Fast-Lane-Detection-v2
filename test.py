@@ -30,7 +30,9 @@ if __name__ == "__main__":
     if distributed:
         net = torch.nn.parallel.DistributedDataParallel(net, device_ids = [args.local_rank])
 
+    if not cfg.test_work_dir:
+        cfg.test_work_dir = os.path.join(os.path.dirname(os.path.abspath(cfg.test_model)), 'test')
     if not os.path.exists(cfg.test_work_dir):
-        os.mkdir(cfg.test_work_dir)
+        os.makedirs(cfg.test_work_dir)
 
     eval_lane(net, cfg)

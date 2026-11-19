@@ -100,7 +100,10 @@ if __name__ == "__main__":
         net.load_state_dict(resume_dict['model'])
         if 'optimizer' in resume_dict.keys():
             optimizer.load_state_dict(resume_dict['optimizer'])
-        resume_epoch = int(os.path.split(cfg.resume)[1][2:5]) + 1
+        if 'epoch' in resume_dict.keys():
+            resume_epoch = resume_dict['epoch'] + 1
+        else:
+            resume_epoch = int(os.path.split(cfg.resume)[1][2:5]) + 1
     else:
         resume_epoch = 0
 
@@ -116,7 +119,12 @@ if __name__ == "__main__":
 
         train(net, train_loader, loss_dict, optimizer, scheduler,logger, epoch, metric_dict, cfg.dataset)
         train_loader.reset()
+        # saved before evaluation so a failed eval never loses the epoch
+        save_model(net, optimizer, epoch, work_dir, distributed, name = 'model_last.pth')
 
+        eval_interval = getattr(cfg, 'eval_interval', 1)
+        if (epoch + 1) % eval_interval != 0 and epoch != cfg.epoch - 1:
+            continue
         res = eval_lane(net, cfg, ep = epoch, logger = logger)
 
         if res is not None and res > max_res:

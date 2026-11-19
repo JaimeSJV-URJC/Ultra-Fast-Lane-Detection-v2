@@ -61,6 +61,7 @@ def get_args():
     parser.add_argument('--mean_loss_col_w', default = None, type = float)
     parser.add_argument('--eval_mode', default = None, type = str)
     parser.add_argument('--eval_during_training', default = None, type = str2bool)
+    parser.add_argument('--eval_interval', default = None, type = int, help='evaluate every N epochs (the last epoch is always evaluated)')
     parser.add_argument('--split_channel', default = None, type = str2bool)
     parser.add_argument('--match_method', default = None, type = str, choices = ['fixed', 'hungarian'])
     parser.add_argument('--selected_lane', default = None, type = int, nargs='+')
@@ -79,7 +80,7 @@ def merge_config():
     'weight_decay','momentum','scheduler','steps','gamma','warmup','warmup_iters',
     'use_aux','griding_num','backbone','sim_loss_w','shp_loss_w','note','log_path',
     'finetune','resume', 'test_model','test_work_dir', 'num_lanes', 'var_loss_power', 'num_row', 'num_col', 'train_width', 'train_height',
-    'num_cell_row', 'num_cell_col', 'mean_loss_w','fc_norm','soft_loss','cls_loss_col_w', 'cls_ext_col_w', 'mean_loss_col_w', 'eval_mode', 'eval_during_training', 'split_channel', 'match_method', 'selected_lane', 'cumsum', 'masked']
+    'num_cell_row', 'num_cell_col', 'mean_loss_w','fc_norm','soft_loss','cls_loss_col_w', 'cls_ext_col_w', 'mean_loss_col_w', 'eval_mode', 'eval_during_training', 'eval_interval', 'split_channel', 'match_method', 'selected_lane', 'cumsum', 'masked']
     for item in items:
         if getattr(args, item) is not None:
             dist_print('merge ', item, ' config')
@@ -98,13 +99,13 @@ def merge_config():
     return args, cfg
 
 
-def save_model(net, optimizer, epoch,save_path, distributed):
+def save_model(net, optimizer, epoch,save_path, distributed, name = 'model_best.pth'):
     if is_main_process():
         model_state_dict = net.state_dict()
-        state = {'model': model_state_dict, 'optimizer': optimizer.state_dict()}
+        state = {'model': model_state_dict, 'optimizer': optimizer.state_dict(), 'epoch': epoch}
         # state = {'model': model_state_dict}
         assert os.path.exists(save_path)
-        model_path = os.path.join(save_path, 'model_best.pth')
+        model_path = os.path.join(save_path, name)
         torch.save(state, model_path)
 
 import pathspec
@@ -139,7 +140,11 @@ import datetime, os
 def get_work_dir(cfg):
     now = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     hyper_param_str = '_lr_%1.0e_b_%d' % (cfg.learning_rate, cfg.batch_size)
-    work_dir = os.path.join(cfg.log_path, now + hyper_param_str + cfg.note)
+    log_path = cfg.log_path
+    if not log_path:
+        # default to <project>/logs
+        log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+    work_dir = os.path.join(log_path, now + hyper_param_str + cfg.note)
     return work_dir
 
 def get_logger(work_dir, cfg):
